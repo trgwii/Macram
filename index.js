@@ -25,7 +25,23 @@ const {
 	reduced
 } = R;
 
-const optimize = fn => fromTree(deepMap(optimizer, buildTree(fn)));
+const optimize = fn => {
+	// fromTree(deepMap(optimizer, buildTree(fn)));
+	const a = buildTree(fn);
+	const b = deepMap(x =>
+		x['@@functional/placeholder']
+			? { __placeholder__: true }
+			: x,
+		a);
+	const c = deepMap(optimizer, b);
+	const d = deepMap(x =>
+		x.__placeholder__
+			? { '@@functional/placeholder': true }
+			: x,
+		c);
+	const e = fromTree(d);
+	return e;
+};
 
 const myReducer = reduce(
 	ifElse(
@@ -54,6 +70,22 @@ console.log(
 console.log(
 	'Post optimization:',
 	stringify(optimize(myFunc)));
+
+console.log(
+	'Pre optimization:',
+	stringify(R.add(R.__, 1)));
+
+console.log(
+	'Post optimization:',
+	stringify(optimize(R.add(R.__, 1))));
+
+console.log(
+	'Pre optimization:',
+	stringify(R.add(1, R.__)));
+
+console.log(
+	'Post optimization:',
+	stringify(optimize(R.add(1, R.__))));
 
 
 require('repl').start();

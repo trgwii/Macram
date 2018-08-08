@@ -2,6 +2,7 @@
 
 // Ramda is only needed for R.toString
 const R = require('ramda');
+const isPlaceholder = require('ramda/src/internal/_isPlaceholder');
 
 // Assign length, name, toString to target from source
 const assignFunctionProps = (original, target) =>
@@ -24,7 +25,7 @@ const assignFunctionProps = (original, target) =>
 const wrapFn = (store, fn, name, initialArgs) => {
 	const wrapped = assignFunctionProps(fn, (...args) => {
 		const result = fn(...args);
-		if (result instanceof Function) {
+		if (typeof result === 'function') {
 			return wrapFn(store, result, name, [ ...initialArgs, ...args ]);
 		}
 		return result;
@@ -61,7 +62,9 @@ const stringifyCall = (store, name, args) =>
 			.map(x =>
 				typeof x === 'function'
 					? stringify(store, x)
-					: R.toString(x))
+					: isPlaceholder(x)
+						? '__'
+						: R.toString(x))
 			.join(', ') +
 		')'
 		: name;
@@ -84,7 +87,9 @@ const wrap = lib => {
 	const result = {};
 	const entries = Object.entries(lib);
 	for (const [ name, fn ] of entries) {
-		result[name] = wrapFn(store, fn, name, []);
+		result[name] = typeof fn === 'function'
+			? wrapFn(store, fn, name, [])
+			: fn;
 	}
 	return {
 		buildTree: fn => buildTree(store, fn),
