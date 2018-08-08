@@ -12,6 +12,7 @@ const {
 } = Logic.wrap(require('ramda'));
 
 const deepMap = require('./deepMap');
+const optimizer = require('./optimizer');
 
 const {
 	append,
@@ -23,17 +24,6 @@ const {
 	reduce,
 	reduced
 } = R;
-
-const optimizer = R.compose(
-	R.when(
-		R.equals({ name: 'reduce', args: [ { name: 'add', args: [] }, 0 ] }),
-		x => ({ name: 'sum', args: [] })),
-	R.when(
-		x => x && x.name === 'identity' && x.args.length > 0,
-		x => x.args[0]),
-	R.when(
-		x => x && x.name === 'compose' && x.args.length === 1,
-		x => x.args[0]));
 
 const optimize = fn => fromTree(deepMap(optimizer, buildTree(fn)));
 
@@ -53,7 +43,8 @@ Object.assign(global, R, {
 	store,
 	stringify,
 	myReducer,
-	myFunc
+	myFunc,
+	optimize
 });
 
 console.log(
