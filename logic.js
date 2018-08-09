@@ -4,6 +4,10 @@
 const R = require('ramda');
 const isPlaceholder = require('ramda/src/internal/_isPlaceholder');
 
+const { fn: fnSym, isFn } = require('./symbols');
+
+const Fn = (name, ...args) => ({ fn: fnSym, name, args });
+
 // Assign length, name, toString to target from source
 const assignFunctionProps = (original, target) =>
 	Object.defineProperties(target, {
@@ -30,28 +34,25 @@ const wrapFn = (store, fn, name, initialArgs) => {
 		}
 		return result;
 	});
-	store.set(wrapped, { name, args: initialArgs });
+	store.set(wrapped, Fn(name, ...initialArgs));
 	return wrapped;
 };
 
+// Build a call tree from a function
 const buildTree = (store, fn) => {
 	const entry = store.get(fn);
-	return {
-		name: entry.name,
-		args: entry.args
-			.map(x =>
-				typeof x === 'function'
-					? buildTree(store, x)
-					: x)
-	};
-}
+	return Fn(entry.name, ...entry.args
+		.map(x =>
+			typeof x === 'function'
+				? buildTree(store, x)
+				: x));
+};
 
+// Reconstruct a function from a call tree
 const fromTree = (lib, tree) =>
 	lib[tree.name](...tree.args
 		.map(arg =>
-			typeof arg === 'object' &&
-			typeof arg.name === 'string' &&
-			Array.isArray(arg.args)
+			isFn(arg)
 				? fromTree(lib, arg)
 				: arg));
 
@@ -60,7 +61,9 @@ const stringifyCall = (store, name, args) =>
 	args.length > 0
 		? name + '(' + args
 			.map(x =>
+				// eslint-disable-next-line no-nested-ternary
 				typeof x === 'function'
+					// eslint-disable-next-line no-use-before-define
 					? stringify(store, x)
 					: isPlaceholder(x)
 						? '__'
@@ -72,6 +75,7 @@ const stringifyCall = (store, name, args) =>
 // Stringify a function
 const stringify = (store, fn) => {
 	// TODO: Should probably throw for missing entry
+	// Throwing means disallowing non-Ramda functions
 	const entry = store.get(fn) || {
 		name: fn.name.length > 0
 			? fn.name

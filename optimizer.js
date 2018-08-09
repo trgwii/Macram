@@ -2,7 +2,9 @@
 
 const R = require('ramda');
 
-const fn = (name, ...args) => ({ name, args });
+const { fn: fnSym, isFn, isPlaceholder } = require('./symbols');
+
+const fn = (name, ...args) => ({ fn: fnSym, name, args });
 
 const whenEq = (tree, fn) =>
 	R.when(R.equals(tree), fn);
@@ -51,7 +53,7 @@ const simpleReplacements = [
 		fn('invoker', 1, 'split'),
 		'split'),
 	replaceWithFn(
-		fn('reduce', fn('add'), 0 ),
+		fn('reduce', fn('add'), 0),
 		'sum'),
 	replaceWithFn(
 		fn('invoker', 0, 'toLowerCase'),
@@ -67,7 +69,7 @@ const simpleReplacements = [
 const nAryMathOp = (arity, name) =>
 	R.when(
 		x =>
-			x &&
+			isFn(x) &&
 			x.name === name &&
 			x.args.length >= 2 &&
 			x.args.every(x => typeof x === 'number'),
@@ -76,7 +78,7 @@ const nAryMathOp = (arity, name) =>
 const listMathOp = name =>
 	R.when(
 		x =>
-			x &&
+			isFn(x) &&
 			x.name === name &&
 			x.args.length > 0 &&
 			Array.isArray(x.args[0]) &&
@@ -105,17 +107,14 @@ const mathConstants = [
 const binaryCommutative = name =>
 	R.when(
 		x =>
-			x &&
+			isFn(x) &&
 			x.name === name &&
-			x.args.length > 0 &&
-			x.args.find(x => x.__placeholder__),
-		x => ({
-			name: x.name,
-			args: x.args
-				.filter(x =>
-					x &&
-					(!x.__placeholder__))
-		}));
+			x.args.length >= 2 &&
+			x.args.find(isPlaceholder),
+		x => fn(x.name, ...x.args
+			.filter(x =>
+				x &&
+				!isPlaceholder(x))));
 
 const commutatives = [
 	binaryCommutative('add'),
@@ -128,23 +127,31 @@ const optimizer = R.compose(
 	...commutatives,
 	R.when(
 		x =>
-			x &&
+			isFn(x) &&
 			x.name === 'identity' &&
 			x.args.length > 0,
 		x => x.args[0]),
 	R.when(
 		x =>
-			x &&
+			isFn(x) &&
 			x.name === 'compose' &&
 			x.args.length === 1,
 		x => x.args[0]),
 	R.when(
+		x => isFn(x) &&
+		x.name === 'compose' &&
+		x.args.find(x =>
+			isFn(x) &&
+			x.name === 'identity'),
+		x => fn(x.name, ...x.args.filter(x =>
+			!(isFn(x) && x.name === 'identity')))),
+	R.when(
 		x =>
-			x &&
+			isFn(x) &&
 			x.args &&
 			x.args.length > 0 &&
-			x.args[x.args.length - 1].__placeholder__,
-		x => ({ name: x.name, args: x.args.slice(0, -1) }))
+			isPlaceholder(x.args[x.args.length - 1]),
+		x => fn(x.name, ...x.args.slice(0, -1)))
 );
 
 module.exports = optimizer;

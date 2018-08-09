@@ -14,6 +14,8 @@ const {
 const deepMap = require('./deepMap');
 const optimizer = require('./optimizer');
 
+const { placeholder, isPlaceholder } = require('./symbols');
+
 const {
 	append,
 	equals,
@@ -25,20 +27,22 @@ const {
 	reduced
 } = R;
 
+const replacePlaceholder = x =>
+	x && x['@@functional/placeholder']
+		? placeholder
+		: x;
+
+const restorePlaceholder = x =>
+	isPlaceholder(x)
+		? { '@@functional/placeholder': true }
+		: x;
+
 const optimize = fn => {
 	// fromTree(deepMap(optimizer, buildTree(fn)));
 	const a = buildTree(fn);
-	const b = deepMap(x =>
-		x['@@functional/placeholder']
-			? { __placeholder__: true }
-			: x,
-		a);
+	const b = deepMap(replacePlaceholder, a);
 	const c = deepMap(optimizer, b);
-	const d = deepMap(x =>
-		x.__placeholder__
-			? { '@@functional/placeholder': true }
-			: x,
-		c);
+	const d = deepMap(restorePlaceholder, c);
 	const e = fromTree(d);
 	return e;
 };
@@ -65,6 +69,14 @@ Object.assign(global, R, {
 
 console.log(
 	'Pre optimization:',
+	stringify(myReducer));
+
+console.log(
+	'Post optimization:',
+	stringify(optimize(myReducer)));
+
+console.log(
+	'Pre optimization:',
 	stringify(myFunc));
 
 console.log(
@@ -87,5 +99,12 @@ console.log(
 	'Post optimization:',
 	stringify(optimize(R.add(1, R.__))));
 
+console.log(
+	'Pre optimization:',
+	stringify(R.compose(R.identity, R.map(R.identity), R.identity)));
+
+console.log(
+	'Post optimization:',
+	stringify(optimize(R.compose(R.identity, R.map(R.identity), R.identity))));
 
 require('repl').start();
