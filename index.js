@@ -11,10 +11,9 @@ const {
 	stringify
 } = Logic.wrap(require('ramda'));
 
-const deepMap = require('./deepMap');
-const optimizer = require('./optimizer');
+const { createOptimize } = require('./optimizer');
 
-const { placeholder, isPlaceholder } = require('./symbols');
+const optimize = createOptimize(buildTree, fromTree);
 
 const {
 	append,
@@ -26,26 +25,6 @@ const {
 	reduce,
 	reduced
 } = R;
-
-const replacePlaceholder = x =>
-	x && x['@@functional/placeholder']
-		? placeholder
-		: x;
-
-const restorePlaceholder = x =>
-	isPlaceholder(x)
-		? { '@@functional/placeholder': true }
-		: x;
-
-const optimize = fn => {
-	// fromTree(deepMap(optimizer, buildTree(fn)));
-	const a = buildTree(fn);
-	const b = deepMap(replacePlaceholder, a);
-	const c = deepMap(optimizer, b);
-	const d = deepMap(restorePlaceholder, c);
-	const e = fromTree(d);
-	return e;
-};
 
 const myReducer = reduce(
 	ifElse(

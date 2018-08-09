@@ -42,7 +42,7 @@ const getEntry = (store, fn) =>
 	// Throwing means disallowing non-Ramda functions
 	// Apparently just passing them through works fine :)
 	store.get(fn) ||
-		(fn.name.length > 0
+		(fn && fn.name && fn.name.length > 0
 			? Fn(fn.name)
 			: fn);
 

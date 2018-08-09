@@ -2,6 +2,8 @@
 
 const R = require('ramda');
 
+const deepMap = require('./deepMap');
+
 const { Fn, isFn, isPlaceholder } = require('./symbols');
 
 const fn = Fn;
@@ -121,7 +123,7 @@ const commutatives = [
 	binaryCommutative('product')
 ];
 
-const optimizer = R.compose(
+const optimizer = x => R.compose(
 	...simpleReplacements,
 	...mathConstants,
 	...commutatives,
@@ -150,7 +152,40 @@ const optimizer = R.compose(
 			isFn(x) &&
 			x.args.length > 0 &&
 			isPlaceholder(x.args[x.args.length - 1]),
-		x => fn(x.name, ...x.args.slice(0, -1)))
-);
+		x => fn(x.name, ...x.args.slice(0, -1))),
+	R.when(
+		x =>
+			isFn(x) &&
+			x.name === 'call' &&
+			x.args.length > 0,
+		x => fn(x.args[0].name, ...x.args.slice(1)))
+)(x);
 
-module.exports = optimizer;
+const replacePlaceholder = x =>
+	x && x['@@functional/placeholder']
+		? placeholder
+		: x;
+
+const restorePlaceholder = x =>
+	isPlaceholder(x)
+		? { '@@functional/placeholder': true }
+		: x;
+
+const createOptimize = (buildTree, fromTree) => fn => {
+	// fromTree(deepMap(optimizer, buildTree(fn)));
+	const a = buildTree(fn);
+	const b = deepMap(replacePlaceholder, a);
+	const c = deepMap(optimizer, b);
+	const d = deepMap(restorePlaceholder, c);
+	const e = fromTree(d);
+	return e;
+};
+
+module.exports = {
+	optimizer,
+	createOptimize,
+	addReplacement: (tree, name, ...args) => {
+		simpleReplacements.push(
+			replaceWithFn(tree, name, ...args));
+	}
+};
