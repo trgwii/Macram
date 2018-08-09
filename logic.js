@@ -4,9 +4,7 @@
 const R = require('ramda');
 const isPlaceholder = require('ramda/src/internal/_isPlaceholder');
 
-const { fn: fnSym, isFn } = require('./symbols');
-
-const Fn = (name, ...args) => ({ fn: fnSym, name, args });
+const { Fn, isFn } = require('./symbols');
 
 // Assign length, name, toString to target from source
 const assignFunctionProps = (original, target) =>
@@ -38,23 +36,37 @@ const wrapFn = (store, fn, name, initialArgs) => {
 	return wrapped;
 };
 
+// Retrieve a call tree from store, defaults to a plain thingy
+const getEntry = (store, fn) =>
+	// TODO: Should probably throw for missing entry
+	// Throwing means disallowing non-Ramda functions
+	// Apparently just passing them through works fine :)
+	store.get(fn) ||
+		(fn.name.length > 0
+			? Fn(fn.name)
+			: fn);
+
 // Build a call tree from a function
 const buildTree = (store, fn) => {
-	const entry = store.get(fn);
-	return Fn(entry.name, ...entry.args
-		.map(x =>
-			typeof x === 'function'
-				? buildTree(store, x)
-				: x));
+	const entry = getEntry(store, fn);
+	return isFn(entry)
+		? Fn(entry.name, ...entry.args
+			.map(x =>
+				typeof x === 'function' && store.get(fn)
+					? buildTree(store, x)
+					: x))
+		: entry;
 };
 
 // Reconstruct a function from a call tree
 const fromTree = (lib, tree) =>
-	lib[tree.name](...tree.args
-		.map(arg =>
-			isFn(arg)
-				? fromTree(lib, arg)
-				: arg));
+	isFn(tree)
+		? lib[tree.name](...tree.args
+			.map(arg =>
+				isFn(arg)
+					? fromTree(lib, arg)
+					: arg))
+		: tree;
 
 // Logic for stringifying a call expression
 const stringifyCall = (store, name, args) =>
@@ -74,15 +86,13 @@ const stringifyCall = (store, name, args) =>
 
 // Stringify a function
 const stringify = (store, fn) => {
-	// TODO: Should probably throw for missing entry
-	// Throwing means disallowing non-Ramda functions
-	const entry = store.get(fn) || {
-		name: fn.name.length > 0
-			? fn.name
-			: R.toString(fn),
-		args: []
-	};
-	return stringifyCall(store, entry.name, entry.args);
+	const entry = getEntry(store, fn);
+	return stringifyCall(
+		store,
+		entry.name || R.toString(entry),
+		isFn(entry)
+			? entry.args
+			: []);
 };
 
 // Wrap an object of functions (Ramda, for instance)

@@ -68,43 +68,43 @@ Object.assign(global, R, {
 });
 
 console.log(
-	'Pre optimization:',
+	'Pre:',
 	stringify(myReducer));
 
 console.log(
-	'Post optimization:',
+	'Post:',
 	stringify(optimize(myReducer)));
 
 console.log(
-	'Pre optimization:',
+	'Pre:',
 	stringify(myFunc));
 
 console.log(
-	'Post optimization:',
+	'Post:',
 	stringify(optimize(myFunc)));
 
 console.log(
-	'Pre optimization:',
+	'Pre:',
 	stringify(R.add(R.__, 1)));
 
 console.log(
-	'Post optimization:',
+	'Post:',
 	stringify(optimize(R.add(R.__, 1))));
 
 console.log(
-	'Pre optimization:',
+	'Pre:',
 	stringify(R.add(1, R.__)));
 
 console.log(
-	'Post optimization:',
+	'Post:',
 	stringify(optimize(R.add(1, R.__))));
 
 console.log(
-	'Pre optimization:',
-	stringify(R.compose(R.identity, R.map(R.identity), R.identity)));
+	'Pre:',
+	stringify(R.compose(R.compose(R.identity, R.map(R.identity)), R.identity)));
 
 console.log(
-	'Post optimization:',
-	stringify(optimize(R.compose(R.identity, R.map(R.identity), R.identity))));
+	'Post:',
+	stringify(optimize(R.compose(R.compose(R.identity, R.map(R.identity)), R.identity))));
 
 require('repl').start();

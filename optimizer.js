@@ -2,9 +2,9 @@
 
 const R = require('ramda');
 
-const { fn: fnSym, isFn, isPlaceholder } = require('./symbols');
+const { Fn, isFn, isPlaceholder } = require('./symbols');
 
-const fn = (name, ...args) => ({ fn: fnSym, name, args });
+const fn = Fn;
 
 const whenEq = (tree, fn) =>
 	R.when(R.equals(tree), fn);
@@ -148,7 +148,6 @@ const optimizer = R.compose(
 	R.when(
 		x =>
 			isFn(x) &&
-			x.args &&
 			x.args.length > 0 &&
 			isPlaceholder(x.args[x.args.length - 1]),
 		x => fn(x.name, ...x.args.slice(0, -1)))
