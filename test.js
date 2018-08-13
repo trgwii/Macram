@@ -10,10 +10,6 @@ const stringify = require('./src/stringify');
 
 const [ R, store ] = wrap(require('ramda'));
 
-console.log('store.get(add):', store.get(R.add));
-console.log('store.get(add()):', store.get(R.add()));
-console.log('parse(store, add()):', parse(store, R.add()));
-
 Object.assign(require('repl').start().context, R, {
 	Call,
 	Fn,
