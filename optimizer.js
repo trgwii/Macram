@@ -4,7 +4,7 @@ const R = require('ramda');
 
 const deepMap = require('./deepMap');
 
-const { Fn, isFn, isPlaceholder } = require('./symbols');
+const { Fn, isFn, isPlaceholder, placeholder } = require('./symbols');
 
 const fn = Fn;
 

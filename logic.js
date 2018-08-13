@@ -52,10 +52,16 @@ const buildTree = (store, fn) => {
 	return isFn(entry)
 		? Fn(entry.name, ...entry.args
 			.map(x =>
-				typeof x === 'function' && store.get(fn)
+				typeof x === 'function' && store.get(x)
 					? buildTree(store, x)
-					: x))
-		: entry;
+					: Array.isArray(x)
+						? x.map(x =>
+							buildTree(store, x))
+						: x))
+		: Array.isArray(fn)
+			? fn.map(x =>
+				buildTree(store, x))
+			: entry;
 };
 
 // Reconstruct a function from a call tree
@@ -68,20 +74,22 @@ const fromTree = (lib, tree) =>
 					: arg))
 		: tree;
 
+const stringifyArray = (store, array) =>
+	'[ ' + array.map(x =>
+		Array.isArray(x)
+			? stringifyArray(store, x)
+			: stringify(store, x)).join(', ') + ' ]';
+
 // Logic for stringifying a call expression
 const stringifyCall = (store, name, args) =>
 	args.length > 0
 		? name + '(' + args
 			.map(x =>
-				// eslint-disable-next-line no-nested-ternary
-				typeof x === 'function'
-					// eslint-disable-next-line no-use-before-define
-					? stringify(store, x)
-					: isPlaceholder(x)
-						? '__'
-						: R.toString(x))
-			.join(', ') +
-		')'
+				typeof x === 'function' ? stringify(store, x)
+					: isPlaceholder(x) ? '__'
+					: Array.isArray(x) ? stringifyArray(store, x)
+					: R.toString(x))
+			.join(', ') + ')'
 		: name;
 
 // Stringify a function
