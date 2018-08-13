@@ -1,0 +1,23 @@
+{
+  "name": "macram",
+  "version": "0.1.0",
+  "description": "Ramda optimizer / compiler, general macro-system",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.rory.no/trgwii/Macram.git"
+  },
+  "keywords": [
+    "ramda",
+    "macros"
+  ],
+  "author": "Thomas Rory Gummerson <thomas@gummerson.no> (https://trgwii.no/)",
+  "license": "MIT",
+  "dependencies": {
+    "ramda": "^0.25.0",
+    "s-expression": "^3.0.3"
+  }
+}
