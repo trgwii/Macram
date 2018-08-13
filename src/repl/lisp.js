@@ -16,6 +16,7 @@ const stringify = require('../stringify/lisp');
 
 const Call = require('../utils/Call');
 const Fn = require('../utils/Fn');
+const nameFunction = require('../utils/nameFunction');
 
 const [ R, store ] = wrap('ramda');
 
@@ -30,10 +31,9 @@ const parseExpr = R.cond([
 		x =>
 			typeof x[0] === 'string'
 				? Call(x[0], x.slice(1).map(parseExpr))
-				: Call('call', x.map(R.ifElse(
-					x => typeof x === 'string',
-					x => Fn(x),
-					parseExpr))) ],
+				: Call(
+					x.map(parseExpr)[0],
+					x.map(parseExpr).slice(1)) ],
 	[ R.T,
 		x => x ]
 ]);
@@ -44,12 +44,15 @@ const evaluator = (line, context, filename, callback) => {
 		if (expr.col === 1) {
 			return callback(new repl.Recoverable());
 		}
-		return callback(expr);
+		if (expr instanceof Error) {
+			return callback(expr);
+		}
+		return callback(null, parseExpr(expr));
 	}
 	const tree = parseExpr(expr);
 	const optimized = optimize(opt, tree);
 	const ran = compile(replContext, optimized);
-	return callback(null, stringify(parse(store, ran)));
+	return callback(null, nameFunction(stringify(parse(store, ran)), ran));
 };
 
 const replContext = repl.start({
