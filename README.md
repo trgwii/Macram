@@ -10,7 +10,3 @@ cd Ramanus
 npm i ramda s-expression
 node lisp
 ```
-
-## Trivia
-
-* This project used to be called Ramanus
