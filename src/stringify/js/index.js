@@ -35,6 +35,9 @@ const stringify = (tree, indent = 0) => {
 	}
 
 	if (typeof tree === 'object') {
+		if (tree['@@functional/placeholder']) {
+			return '__';
+		}
 		return ind(indent) +
 			'{\n' +
 			Object.entries(tree).map(([ name, value ]) =>

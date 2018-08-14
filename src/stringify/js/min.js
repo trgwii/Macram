@@ -25,6 +25,9 @@ const stringify = tree => {
 	}
 
 	if (typeof tree === 'object') {
+		if (tree['@@functional/placeholder']) {
+			return '__';
+		}
 		return '{ ' +
 			Object.entries(tree).map(([ name, value ]) =>
 				JSON.stringify(name) + ': ' + stringify(value)) +

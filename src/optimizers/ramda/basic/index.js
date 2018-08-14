@@ -82,7 +82,8 @@ const nAryMathOp = (arity, name) =>
 	R.when(
 		x =>
 			isCall(x) &&
-			x.name === name &&
+			isFn(x.expr) &&
+			x.expr.name === name &&
 			x.args.length >= 2 &&
 			x.args.every(x => typeof x === 'number'),
 		x => R[name](...x.args));
@@ -91,7 +92,8 @@ const listMathOp = name =>
 	R.when(
 		x =>
 			isCall(x) &&
-			x.name === name &&
+			isFn(x.expr) &&
+			x.expr.name === name &&
 			x.args.length > 0 &&
 			Array.isArray(x.args[0]) &&
 			x.args[0].every(x => typeof x === 'number'),
@@ -120,10 +122,11 @@ const binaryCommutative = name =>
 	R.when(
 		x =>
 			isCall(x) &&
-			x.name === name &&
+			isFn(x.expr) &&
+			x.expr.name === name &&
 			x.args.length >= 2 &&
 			x.args.find(isPlaceholder),
-		x => fn(x.name, ...x.args
+		x => fn(x.expr.name, ...x.args
 			.filter(x =>
 				x &&
 				!isPlaceholder(x))));
@@ -140,40 +143,44 @@ const optimizer = R.compose(
 	R.when(
 		x =>
 			isCall(x) &&
-			x.name === 'identity' &&
+			isFn(x.expr) &&
+			x.expr.name === 'identity' &&
 			x.args.length > 0,
 		x => x.args[0]),
 	R.when(
 		x =>
 			isCall(x) &&
-			x.name === 'compose' &&
+			isFn(x.expr) &&
+			x.expr.name === 'compose' &&
 			x.args.length === 1,
 		x => x.args[0]),
 	R.when(
 		x =>
 			isCall(x) &&
-		x.name === 'compose' &&
-		x.args.find(x =>
-			isCall(x) &&
-			x.name === 'identity'),
-		x => fn(x.name, ...x.args.filter(x =>
+			isFn(x.expr) &&
+			x.expr.name === 'compose' &&
+			x.args.find(x =>
+				isFn(x) &&
+				x.name === 'identity'),
+		x => fn(x.expr.name, ...x.args.filter(x =>
 			!(isFn(x) && x.name === 'identity')))),
 	R.when(
 		x =>
 			isCall(x) &&
 			x.args.length > 0 &&
 			isPlaceholder(x.args[x.args.length - 1]),
-		x => fn(x.name, ...x.args.slice(0, -1))),
+		x => fn(x.expr.name, ...x.args.slice(0, -1))),
 	R.when(
 		x =>
 			isCall(x) &&
-			x.name === 'call' &&
+			isFn(x.expr) &&
+			x.expr.name === 'call' &&
 			x.args.length > 0,
 		x => fn(x.args[0].name, ...x.args.slice(1))),
-	/* R.when(
+	R.when(
 		x => isCall(x) &&
 			x.args.length === 0,
-		x => x.expr) */
+		x => x.expr)
 );
 
 const replacePlaceholder = x =>
