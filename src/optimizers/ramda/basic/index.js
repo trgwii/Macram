@@ -170,10 +170,10 @@ const optimizer = R.compose(
 			x.name === 'call' &&
 			x.args.length > 0,
 		x => fn(x.args[0].name, ...x.args.slice(1))),
-	R.when(
+	/* R.when(
 		x => isCall(x) &&
 			x.args.length === 0,
-		x => x.expr)
+		x => x.expr) */
 );
 
 const replacePlaceholder = x =>

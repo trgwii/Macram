@@ -8,7 +8,10 @@ const parse = require('./src/parse');
 const compile = require('./src/compile');
 const stringify = require('./src/stringify');
 
-const [ R, store ] = wrap(require('ramda'));
+const [ R, store ] = wrap('ramda', {
+	dedupe: true,
+	optimize: true
+});
 
 Object.assign(require('repl').start().context, R, {
 	Call,
