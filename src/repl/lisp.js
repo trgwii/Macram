@@ -12,7 +12,7 @@ let opt = optimizer.optimizer;
 const wrap = require('../wrap');
 const parse = require('../parse');
 const compile = require('../compile');
-const stringify = require('../stringify/lisp');
+const stringify = require('../stringify/lisp/min');
 
 const Call = require('../utils/Call');
 const Fn = require('../utils/Fn');
